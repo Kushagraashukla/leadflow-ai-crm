@@ -39,6 +39,16 @@ export default async function DashboardLayout({
           LeadFlow AI CRM
         </span>
 
+        {/* Navigation links */}
+        <nav className="ml-8 flex items-center gap-6">
+          <a href="/dashboard" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
+            Dashboard
+          </a>
+          <a href="/leads" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
+            Leads
+          </a>
+        </nav>
+
         {/* Right side: user email + logout */}
         <div className="ml-auto flex items-center gap-4">
           <span className="text-xs text-gray-500 hidden sm:block">
