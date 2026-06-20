@@ -9,7 +9,7 @@ import { createClient } from "@/src/lib/supabase/server";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-// Returned by signUp on failure so the Client Component can display the error.
+// Returned by auth actions on failure so Client Components can display inline errors.
 export type AuthActionResult =
   | { success: true }
   | { success: false; error: string };
@@ -103,4 +103,101 @@ export async function signUp(
   // redirects the browser. It must be called OUTSIDE try/catch blocks.
   // We redirect to a query-param route so the login page can show a notice.
   redirect("/login?message=check-email");
+}
+
+// ─── signIn ───────────────────────────────────────────────────────────────────
+
+/**
+ * Signs in an existing user with email and password.
+ *
+ * On success: redirects to /dashboard (or the ?next= path if provided).
+ * On failure: returns a typed error the LoginForm can display inline.
+ *
+ * @param _prevState - Required by useActionState.
+ * @param formData   - FormData from the login form.
+ */
+export async function signIn(
+  _prevState: AuthActionResult | null,
+  formData: FormData
+): Promise<AuthActionResult> {
+  const email = formData.get("email");
+  const password = formData.get("password");
+  const next = formData.get("next");
+
+  // ── Field presence check ──────────────────────────────────────────────────
+  if (typeof email !== "string" || typeof password !== "string") {
+    return { success: false, error: "Email and password are required." };
+  }
+
+  const trimmedEmail = email.trim();
+  const trimmedPassword = password.trim();
+
+  if (!trimmedEmail || !trimmedEmail.includes("@")) {
+    return { success: false, error: "Please enter a valid email address." };
+  }
+
+  if (!trimmedPassword) {
+    return { success: false, error: "Password is required." };
+  }
+
+  // ── Supabase sign-in ──────────────────────────────────────────────────────
+  const supabase = await createClient();
+
+  const { error } = await supabase.auth.signInWithPassword({
+    email: trimmedEmail,
+    password: trimmedPassword,
+  });
+
+  // ── Handle Supabase errors ────────────────────────────────────────────────
+  if (error) {
+    // Supabase returns "Invalid login credentials" for wrong email or password.
+    // We deliberately keep the message vague to prevent user enumeration.
+    if (
+      error.message.includes("Invalid login credentials") ||
+      error.message.includes("invalid_credentials")
+    ) {
+      return {
+        success: false,
+        error: "Incorrect email or password. Please try again.",
+      };
+    }
+
+    if (error.message.includes("Email not confirmed")) {
+      return {
+        success: false,
+        error: "Please verify your email before signing in.",
+      };
+    }
+
+    return {
+      success: false,
+      error: "Something went wrong. Please try again.",
+    };
+  }
+
+  // ── Success: redirect to dashboard (or the originally requested path) ─────
+  // If the middleware set a ?next= param, respect it; otherwise go to /dashboard.
+  const redirectTo =
+    typeof next === "string" && next.startsWith("/") ? next : "/dashboard";
+
+  redirect(redirectTo);
+}
+
+// ─── signOut ──────────────────────────────────────────────────────────────────
+
+/**
+ * Signs out the current user and clears the session cookie.
+ *
+ * Called from the LogoutButton in the dashboard layout.
+ * Always redirects to /login after sign-out, regardless of errors.
+ */
+export async function signOut(): Promise<void> {
+  const supabase = await createClient();
+
+  // signOut() clears the session on Supabase's server AND removes the
+  // local session cookie via the SSR cookie helpers.
+  await supabase.auth.signOut();
+
+  // Redirect to login. redirect() is called outside try/catch intentionally.
+  redirect("/login");
 }

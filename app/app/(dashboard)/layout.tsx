@@ -1,38 +1,56 @@
 // Dashboard layout — applies to all authenticated routes.
-// Route group (dashboard) isolates this shell from the (auth) layout.
+// Server Component: can use async/await and call Supabase directly.
 //
-// Current state: pass-through layout — renders children directly.
-// Next milestone additions:
-//   - Session check via createClient() from src/lib/supabase/server.ts
-//   - Redirect to /login if no active session
-//   - Sidebar navigation component
-//   - Top navigation bar component
+// Responsibilities:
+//   1. Secondary session validation (middleware is primary)
+//   2. Render the app shell (topbar + main area)
+//   3. Provide the LogoutButton wired to the signOut Server Action
 
-export default function DashboardLayout({
+import { redirect } from "next/navigation";
+import { createClient } from "@/src/lib/supabase/server";
+import LogoutButton from "@/src/features/auth/components/LogoutButton";
+
+export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  // Secondary session guard.
+  // The middleware already protects this route — this is defence in depth.
+  // getUser() re-validates the JWT with Supabase's server (cannot be spoofed).
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  // If no valid session, redirect to login.
+  // This should normally be caught by middleware first, but handles
+  // edge cases like expired tokens that slip past the edge check.
+  if (!user) {
+    redirect("/login");
+  }
+
   return (
-    // Outer shell — full viewport height, flex row for sidebar + main content.
-    // Sidebar will slot in here once the nav component is built.
     <div className="min-h-screen flex flex-col bg-gray-100">
-      {/* Placeholder top bar — replaced with full Topbar component in later milestone */}
-      <header className="h-14 bg-white border-b border-gray-200 flex items-center px-6">
+      {/* Top navigation bar */}
+      <header className="h-14 bg-white border-b border-gray-200 flex items-center px-6 shrink-0">
+        {/* App name / logo placeholder */}
         <span className="text-sm font-semibold text-gray-800">
           LeadFlow AI CRM
         </span>
 
-        {/* Placeholder user section */}
-        <div className="ml-auto text-xs text-gray-400">
-          Dashboard
+        {/* Right side: user email + logout */}
+        <div className="ml-auto flex items-center gap-4">
+          <span className="text-xs text-gray-500 hidden sm:block">
+            {user.email}
+          </span>
+          {/* LogoutButton is a Client Component — needed for the form/button interaction */}
+          <LogoutButton />
         </div>
       </header>
 
-      {/* Main content area */}
-      <main className="flex-1 p-6">
-        {children}
-      </main>
+      {/* Page content */}
+      <main className="flex-1 p-6">{children}</main>
     </div>
   );
 }
