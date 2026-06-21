@@ -9,6 +9,16 @@
 
 ---
 
+## Live Demo
+
+**Production URL:** [https://leadflow-ai-crm-git-main-kushagra3.vercel.app](https://leadflow-ai-crm-git-main-kushagra3.vercel.app)
+
+## Repository
+
+**GitHub:** [https://github.com/Kushagraashukla/leadflow-ai-crm](https://github.com/Kushagraashukla/leadflow-ai-crm)
+
+---
+
 ## Project Overview
 
 LeadFlow AI CRM solves a common problem for small businesses: lead information scattered across spreadsheets, notes apps, and messaging platforms, resulting in missed follow-ups and inconsistent sales processes. LeadFlow consolidates lead management, interaction history, and AI-powered insights into a single, focused application.
@@ -334,6 +344,14 @@ The feature handles common failure modes gracefully:
 - **Model not pulled:** Prompts the user to run `ollama pull llama3.2`
 - **Generation timeout (>60s):** Returns a message suggesting the model may still be loading
 - **Malformed model response:** Applies defensive JSON parsing to strip markdown fences before parsing
+
+### Production Note
+
+The application is deployed on Vercel.
+
+Core CRM functionality (authentication, lead management, notes, dashboard analytics) works in production.
+
+The AI Summary feature relies on a locally running Ollama instance and is intended for local development and demonstration environments.
 
 ---
 
