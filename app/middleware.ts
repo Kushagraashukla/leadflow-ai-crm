@@ -1,6 +1,12 @@
 
 
-import { createServerClient } from "@supabase/ssr";
+import { NextResponse } from "next/server";
+
+export function middleware() {
+  return NextResponse.next();
+}
+
+/*import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 /**
@@ -17,7 +23,7 @@ import { NextResponse, type NextRequest } from "next/server";
  *     is possible if you only guard in the layout.
  *   - Middleware is the canonical Next.js + Supabase recommendation.
  */
-export async function middleware(request: NextRequest) {
+/*export async function middleware(request: NextRequest) {
   // Start with a response that passes the request through unchanged.
   // We may modify it below (to set refreshed cookie values).
   let supabaseResponse = NextResponse.next({ request });
@@ -92,4 +98,4 @@ export const config = {
   matcher: [
     "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
-};
+};*/
