@@ -8,6 +8,9 @@ import { notFound } from "next/navigation";
 import { getLeadById } from "@/src/features/leads/actions/lead.actions";
 import LeadStatusBadge from "@/src/features/leads/components/LeadStatusBadge";
 import DeleteLeadButton from "@/src/features/leads/components/DeleteLeadButton";
+import NotesList from "@/src/features/notes/components/NotesList";
+import AISummaryPanel from "@/src/features/ai-summary/components/AISummaryPanel";
+import { getAISummary } from "@/src/features/ai-summary/actions/ai-summary.actions";
 
 interface LeadDetailPageProps {
   params: Promise<{ id: string }>;
@@ -42,7 +45,10 @@ function formatDate(iso: string): string {
 
 export default async function LeadDetailPage({ params }: LeadDetailPageProps) {
   const { id } = await params;
-  const lead = await getLeadById(id);
+  const [lead, existingSummary] = await Promise.all([
+    getLeadById(id),
+    getAISummary(id),
+  ]);
 
   // Triggers Next.js 404 page if lead doesn't exist or belongs to another user.
   if (!lead) notFound();
@@ -100,13 +106,11 @@ export default async function LeadDetailPage({ params }: LeadDetailPageProps) {
         ))}
       </div>
 
-      {/* Placeholder for future Notes section */}
-      <div className="mt-6 bg-white border border-gray-200 rounded-lg p-5">
-        <h2 className="text-sm font-medium text-gray-700 mb-1">Notes</h2>
-        <p className="text-sm text-gray-400">
-          Notes management will be added in the next milestone.
-        </p>
-      </div>
+      {/* Notes section */}
+      <NotesList leadId={lead.id} />
+
+      {/* AI Summary panel — fetched server-side, updates client-side on generate */}
+      <AISummaryPanel leadId={lead.id} initialSummary={existingSummary} />
     </div>
   );
 }
